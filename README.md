@@ -49,7 +49,7 @@ you can use this class to triangulate coordinate in 2D space into coordinate in 
 this file enabled you to calibrate and use DLT easier with some helper function  
 
 | Function       | Description                                  | Input       | Type                | Description                                                                                 |
-| -------------- | -------------------------------------------- | :---------: | :-----------------: |  ------------------------------------------------------------------------------------------ |
+| -------------- | -------------------------------------------- | :---------: | :-----------------: | ------------------------------------------------------------------------------------------- |
 | findBestDLT    | get the best-calibrated parameters for DLT   | l_file      | `str`               | path to image from left view containing chessboard                                          |
 |                |                                              | r_file      | `str`               | path to image from right view containing chessboard                                         |
 |                |                                              | theta       | `float`             | chessboard's tilted angle relative to floor in degrees                                      |
