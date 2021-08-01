@@ -2,7 +2,8 @@ import cv2
 import numpy as np
 import math
 import time
-from dlt import DLT, save_to_file, load_from_file
+import pickle
+from dlt import DLT
 
 class Points():
     def __init__(self, theta, phi, sqSize) -> None:
@@ -55,7 +56,7 @@ class Point():
     def getUV(self):
         return [self.u, self.v]
 
-def findCorners(filename):
+def __findCorners(filename:str):
     image = cv2.imread(filename)
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     success, corners = cv2.findChessboardCorners(gray, (6, 9), None)
@@ -65,8 +66,8 @@ def findCorners(filename):
     else:
         return None
 
-def findChessCoor(filename, theta, phi, sqSize):  
-    uv_list = findCorners(filename)
+def __findChessCoor(filename:str, theta:float, phi:float, sqSize:float):  
+    uv_list = __findCorners(filename)
     points = Points(theta, phi, sqSize)
     if uv_list is not None:
         for idx, uv in enumerate(uv_list):
@@ -74,17 +75,32 @@ def findChessCoor(filename, theta, phi, sqSize):
             points.add(idx, u, v)
     return points
 
+def save_to_file(obj:DLT, filename:str):
+    outfile = open(filename + '.dlt','wb')
+    pickle.dump(obj,outfile)
+    outfile.close()
+    print("save the calibrated parameter to file: ", filename)
+        
+def load_from_file(filename:str):
+    if not filename.endswith('.dlt'):
+        raise ValueError("invalid filename DLT file should end with \".dlt\"")
+    with open(filename,'rb') as param:
+        obj = pickle.load(param)
+    return obj
+
 def EuclidDistance(xyz, uvw):
     return math.hypot(xyz[0]-uvw[0], xyz[1]-uvw[1], xyz[2]-uvw[2])
      
-def find_best_DLT(l_file, r_file, theta, phi, sqSize, silent=False, num_iterate = 1500) -> DLT:
-    print("Finding L and R matrices...")
-    print("With Error (mm)")
+def findBestDLT(l_file:str, r_file:str, theta:float, phi:float, sqSize:float, silent:bool=False, num_iterate:int = 1500) -> DLT:
+    if not silent:
+        print("Finding L and R matrices...")
+        print("With Error (mm)")
+        
     files = [l_file, r_file]
     
     uvRL = []
     for file in files:
-        points = findChessCoor(file, theta, phi, sqSize)
+        points = __findChessCoor(file, theta, phi, sqSize)
         xyz = points.getAllXYZ()
         uv = points.getAllUV()
         uvRL.append(uv)
@@ -154,24 +170,23 @@ def find_best_DLT(l_file, r_file, theta, phi, sqSize, silent=False, num_iterate 
     
     if not silent:
         print("Failed to achieve the desire accuracy, retrying...")
-    return find_best_DLT(l_file, r_file, theta, phi, sqSize, silent)     
+    return findBestDLT(l_file, r_file, theta, phi, sqSize, silent)     
 
 if __name__ == "__main__":
     theta = 60
     phi = 60.0
     sqSize = 22.0
     
-    l_file = r"C:\Users\Boonyawe Sirimaha\Pictures\2021_06_22\IMG_3881_Moment.jpg"
-    r_file = r"C:\Users\Boonyawe Sirimaha\Pictures\2021_06_22\MVI_2973_Moment.jpg"
+    l_file = r"resource\IMG_3881_Moment.jpg"
+    r_file = r"resource\MVI_2973_Moment.jpg"
     
-    best_dlt = find_best_DLT(l_file, r_file, theta, phi, sqSize, False, 2000)
+    best_dlt = findBestDLT(l_file, r_file, theta, phi, sqSize, False, 2000)
     save_to_file(best_dlt, "param.dlt")
-    
     
     ###########################------ Test ------###########################
     uvRL = []
     for file in [l_file, r_file]:
-        points = findChessCoor(file, theta, phi, sqSize)
+        points = __findChessCoor(file, theta, phi, sqSize)
         xyz = points.getAllXYZ()
         uv = points.getAllUV()
         uvRL.append(uv)

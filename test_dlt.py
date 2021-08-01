@@ -1,10 +1,7 @@
-import pickle
-from coor import EuclidDistance
+from coor import EuclidDistance, load_from_file
 from dlt import DLT
 
-infile = open("param.dlt",'rb')
-dlt = pickle.load(infile)
-infile.close()
+dlt = load_from_file("param.dlt")
 
 topLeft = dlt.getXYZ((848, 144), (786, 57))
 topRight = dlt.getXYZ((1397, 160), (995, 513))

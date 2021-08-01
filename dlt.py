@@ -1,21 +1,8 @@
 import numpy as np
-import pickle
-
-def save_to_file(obj, filename):
-    outfile = open(filename,'wb')
-    pickle.dump(obj,outfile)
-    outfile.close()
-    print("save the calibrated parameter to file: ", filename)
-        
-def load_from_file(filename):
-    infile = open(filename,'rb')
-    obj = pickle.load(infile)
-    infile.close()
-    return obj
 
 class DLT():
     '''
-    Camera calibration by DLT using known object points and their image points.
+    you can use this class to triangulate coordinate in 2D space into coordinate in 3D space by using 2 images from different views of the object
     
     Input
     -----
@@ -24,11 +11,6 @@ class DLT():
     uvR: array-like object cantain coordinates in the right-image 2D space.
     
     There must be at least 6 calibration points for the 3D DLT.
-    
-    Output
-    ------
-     L: array of 11 parameters of the calibration matrix.
-     R: array of 11 parameters of the calibration matrix.
     '''
     
     def __init__(self) -> None:

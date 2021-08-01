@@ -3,12 +3,11 @@ import cv2
 import mediapipe as mp
 from threading import Thread
 import time
-
 mp_drawing = mp.solutions.drawing_utils
 mp_hands = mp.solutions.hands
 
 class OMC():
-    def __init__(self, videoPath, videoSize = None, skip = 0, QSize = 64) -> None:
+    def __init__(self, videoPath, videoSize = None, skip:int = 0, QSize:int = 64) -> None:
         self.hands = mp_hands.Hands(max_num_hands=1)
         self.stream = cv2.VideoCapture(videoPath)
         self.size = videoSize
@@ -20,19 +19,19 @@ class OMC():
         self.last = False
 
         if skip != 0:
-            self.skipFrame(skip)
+            self.__skipFrame(skip)
 
-        self.t = Thread(target=self.update)
+        self.t = Thread(target=self.__update)
         self.t.start()
     
-    def skipFrame(self, skip):
+    def __skipFrame(self, skip):
         i = 0
         while i < skip:
             ret, frame = self.stream.read()
             if ret:
                 i += 1
 
-    def update(self):
+    def __update(self):
         while not self.stop:
             if len(self.buffer) >= self.bufferSize:
                 continue
@@ -60,6 +59,10 @@ class OMC():
         self.stop = True 
 
     def handDetect(self):
+        '''
+        this method find hands in a frame
+        '''
+        
         status, image = self.getFrame()
         if not status:
             return False, None
@@ -72,83 +75,82 @@ class OMC():
             status = True
         return status, image
 
-paths = [
-            # r"C:\Users\Boonyawe Sirimaha\Pictures\2021_06_15\IMG_3735.MOV",
-            # r"C:\Users\Boonyawe Sirimaha\Pictures\2021_06_15\MVI_2970.MP4"
+if __name__ == "__main__":
+    paths = [
+                # r"resource\IMG_3735.MOV",
+                # r"resource\MVI_2970.MP4"
 
-            # r"C:\Users\Boonyawe Sirimaha\Pictures\2021_06_15\IMG_3736.MOV",
-            # r"C:\Users\Boonyawe Sirimaha\Pictures\2021_06_15\MVI_2971.MP4" 
-            
-            # r"C:\Users\Boonyawe Sirimaha\Pictures\2021_06_22\IMG_3881.MOV",
-            # r"C:\Users\Boonyawe Sirimaha\Pictures\2021_06_22\MVI_2973.MP4",
-            
-            r"C:\Users\Boonyawe Sirimaha\Pictures\2021_07_20\can.mp4",
-            r"C:\Users\Boonyawe Sirimaha\Pictures\2021_07_20\sam.mp4"
-            
-        ]
+                # r"resource\IMG_3736.MOV",
+                # r"resource\MVI_2971.MP4" 
+                
+                # r"resource\IMG_3881.MOV",
+                # r"resource\MVI_2973.MP4",
+                
+                r"resource\can.mp4",
+                r"resource\sam.mp4"
+            ]
 
-skips = [
-            # 0,
-            # 43
+    skips = [
+                # 0,
+                # 43
 
-            # 57,
-            # 0
-            
-            # 0,
-            # 100
-            
-            412,
-            385
-        ]
+                # 57,
+                # 0
+                
+                # 0,
+                # 100
+                
+                412,
+                385
+            ]
 
-# vsize = (1280,720)
-# vsize = (640, 360)
-vsize = None
+    # vsize = (1280, 720)
+    # vsize = (640, 360)
+    vsize = None
 
-cap_list = [OMC(path, vsize, skips[idx]) for idx, path in enumerate(paths)]
+    cap_list = [OMC(path, vsize, skips[idx]) for idx, path in enumerate(paths)]
 
-if vsize is not None:
-    v_out_dimensions = (vsize(0)*2, vsize(1))
-out_vid = cv2.VideoWriter('output.mp4', cv2.VideoWriter_fourcc('M','P','4','2'), 59.94, (2560, 720))
+    if vsize is not None:
+        v_out_dimensions = (vsize(0)*2, vsize(1))
+    out_vid = cv2.VideoWriter('output.mp4', cv2.VideoWriter_fourcc('M','P','4','2'), 59.94, (2560, 720))
 
-time.sleep(5)
-idx = 0
-# total = min([cap.stream.get(cv2.CAP_PROP_FRAME_COUNT) for cap in cap_list])-max(skips)-30
-total = 145
-print(total)
-t0 = time.time()
+    time.sleep(5)
 
-while True:
-    # you cannot use these two line below at the same time
-    [rets, frames] = np.array([cap.handDetect() for cap in cap_list]).T       # frame with hand landmarks
-    # [rets, frames] = np.array([cap.getFrame() for cap in cap_list]).T         # frame without hand landmarks
-    
-    # check if we have 2 frame from our capture
-    if np.all(rets):
-        # combine frames with hstack function
-        hstack_frames = np.hstack(frames)
+    idx = 0
+    # total is the number of frame we want to perform mo-cap
+    total = 145
+    tStart = time.time()
+    while True:
+        # you cannot use these two line below at the same time
+        [rets, frames] = np.array([cap.handDetect() for cap in cap_list]).T       # frame with hand landmarks
+        # [rets, frames] = np.array([cap.getFrame() for cap in cap_list]).T         # frame without hand landmarks
         
-        # show hstacked frame
-        cv2.imshow("preview", cv2.resize(hstack_frames, (1280, 360)))
-        
-        # write hstacked frame to video we created earlier
-        out_vid.write(np.hstack(frames))
-        
-        # show verbose
-        idx += 1
-        print("{0:.2%}".format(idx/total), end = "\r")
+        # check if we have 2 frame from our capture
+        if np.all(rets):
+            # combine frames with hstack function
+            hstack_frames = np.hstack(frames)
+            
+            # show hstacked frame
+            cv2.imshow("preview", cv2.resize(hstack_frames, (1280, 360)))
+            
+            # write hstacked frame to video we created earlier
+            out_vid.write(np.hstack(frames))
+            
+            # show verbose
+            idx += 1
+            print("{0:.2%}".format(idx/total), end = "\r")
 
-    if cv2.waitKey(1) & 0xFF == ord('q') or idx >= total:
-        cv2.destroyAllWindows()
-        break
+        if cv2.waitKey(1) & 0xFF == ord('q') or idx >= total:
+            cv2.destroyAllWindows()
+            break
 
-# show time used
-tEnd = time.time()-t0
-print(f"{tEnd//60}m {tEnd%60}s")
+    # show time used
+    tEnd = time.time()-tStart
+    print(f"{tEnd//60}m {tEnd%60}s")
 
-#properly close all of the video objects and threads
-for cap in cap_list:
-    cap.close()
+    #properly close all of the video objects and threads
+    for cap in cap_list:
+        cap.close()
 
-# finalize the video file
-out_vid.release()
+    # finalize the video file
+    out_vid.release()
